@@ -40,6 +40,8 @@ module top_level(
     logic sample_trigger;
     logic adc_ready;
     logic enable;
+    logic signed [11:0] distortion_out;
+    logic signed [11:0] trem_out;
     logic [11:0] vol_out;
     logic pwm_val; //pwm signal (HI/LO)
     
@@ -67,9 +69,14 @@ module top_level(
                         .do_out(adc_data),.drdy_out(adc_ready),
                         .den_in(1), .dwe_in(0));
  
+    distortion distort (.clk_in(clk_100mhz), .dist_in(sw[0]), .ready_in(sample_trigger), 
+        .audio_data(sampled_adc_data), .output_data(distortion_out));
+ 
+    tremolo trem (.trem_on(sw[1]), .ready_in(sample_trigger), .clk_in(clk_100mhz), 
+        .signal_in(distortion_out), .signal_out(trem_out));                                                             
                                                                                             
     volume_control vc (.vol_in(sw[15:13]),
-                       .signal_in(sampled_adc_data), .signal_out(vol_out));
+                       .signal_in(trem_out), .signal_out(vol_out));
     pwm (.clk_in(clk_100mhz), .rst_in(btnd), .level_in(vol_out), .pwm_out(pwm_val));
     assign aud_pwm = pwm_val?1'bZ:1'b0; 
     

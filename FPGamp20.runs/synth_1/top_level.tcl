@@ -17,6 +17,8 @@ proc create_report { reportName command } {
     send_msg_id runtcl-5 warning "$msg"
   }
 }
+set_param chipscope.maxJobs 2
+set_param xicom.use_bs_reader 1
 create_project -in_memory -part xc7a100tcsg324-1
 
 set_param project.singleFileAddWarning.threshold 0
@@ -31,11 +33,13 @@ set_property board_part digilentinc.com:nexys4_ddr:part0:1.1 [current_project]
 set_property ip_output_repo c:/Users/Dongjoon/Documents/6.111/FPGamp20/FPGamp20.cache/ip [current_project]
 set_property ip_cache_permissions {read write} [current_project]
 read_verilog -library xil_defaultlib -sv {
+  C:/Users/Dongjoon/Documents/6.111/FPGamp20/FPGamp20.srcs/sources_1/new/distortion.sv
   C:/Users/Dongjoon/Documents/6.111/FPGamp20/FPGamp20.srcs/sources_1/new/pwm.sv
+  C:/Users/Dongjoon/Documents/6.111/FPGamp20/FPGamp20.srcs/sources_1/new/tremolo.sv
   C:/Users/Dongjoon/Documents/6.111/FPGamp20/FPGamp20.srcs/sources_1/new/volume_control.sv
   C:/Users/Dongjoon/Documents/6.111/FPGamp20/FPGamp20.srcs/sources_1/new/top_level.sv
 }
-read_ip -quiet c:/Users/Dongjoon/Documents/6.111/FPGamp20/FPGamp20.srcs/sources_1/ip/xadc_wiz_0/xadc_wiz_0.xci
+read_ip -quiet C:/Users/Dongjoon/Documents/6.111/FPGamp20/FPGamp20.srcs/sources_1/ip/xadc_wiz_0/xadc_wiz_0.xci
 set_property used_in_implementation false [get_files -all c:/Users/Dongjoon/Documents/6.111/FPGamp20/FPGamp20.srcs/sources_1/ip/xadc_wiz_0/xadc_wiz_0_ooc.xdc]
 set_property used_in_implementation false [get_files -all c:/Users/Dongjoon/Documents/6.111/FPGamp20/FPGamp20.srcs/sources_1/ip/xadc_wiz_0/xadc_wiz_0.xdc]
 
