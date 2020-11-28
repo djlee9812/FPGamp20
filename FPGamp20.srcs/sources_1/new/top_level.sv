@@ -35,7 +35,7 @@ module top_level(
     parameter SAMPLE_COUNT = 2082;//gets approximately (will generate audio at approx 48 kHz sample rate.
     
     logic [15:0] sample_counter;
-    logic [11:0] adc_data;
+    logic [15:0] adc_data;
     logic [11:0] sampled_adc_data;
     logic sample_trigger;
     logic adc_ready;
@@ -60,7 +60,7 @@ module top_level(
             sample_counter <= sample_counter + 16'b1;
         end
         if (sample_trigger) begin
-            sampled_adc_data <= {~adc_data[11],adc_data[10:0]}; //convert to signed. incoming data is offset binary
+            sampled_adc_data <= {~adc_data[15],adc_data[14:4]}; //convert to signed. incoming data is offset binary
             //https://en.wikipedia.org/wiki/Offset_binary
         end
     end
