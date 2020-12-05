@@ -85,7 +85,7 @@ module reverb(
                 addr <= writeAddr;
                 addr1 <= writeAddr;
                 writeAddr <= writeAddr + 1'b1;
-                signal_out <= signal_in + (firstEcho >>> 1) + (secondEcho >>> 2) + (thirdEcho >>> 1) + (fourthEcho >>> 2) + (fifthEcho >>>1) + (sixthEcho >>>2);
+                signal_out <= signal_in + (firstEcho) + (secondEcho) + (thirdEcho) + (fourthEcho) + (fifthEcho) + (sixthEcho);
             end else if (state == PREP_FIRST) begin
                 // prep to get first echo
                 wea <= 1'b0;
@@ -93,20 +93,20 @@ module reverb(
                 addr1 <= writeAddr - DELAY4;
                 state <= GET_FIRST;
             end else if (state == GET_FIRST) begin
-                firstEcho <= data_from_bram;
-                fourthEcho <= data_from_bram1;
+                firstEcho <= (data_from_bram >>> 1);
+                fourthEcho <= (data_from_bram1 >>> 2);
                 addr <= writeAddr - DELAY2;
                 addr1 <= writeAddr - DELAY5;
                 state <= GET_SECOND;
             end else if (state == GET_SECOND) begin
                 state <= GET_THIRD;
-                secondEcho <= data_from_bram;
-                fifthEcho <= data_from_bram1;
+                secondEcho <= (data_from_bram >>> 2);
+                fifthEcho <= (data_from_bram1 >>> 1);
                 addr1 <= writeAddr - DELAY6;
                 addr <= writeAddr - DELAY3;
             end else if (state == GET_THIRD) begin
-                thirdEcho <= data_from_bram;
-                sixthEcho <= data_from_bram1;
+                thirdEcho <= (data_from_bram >>> 1);
+                sixthEcho <= (data_from_bram1 >>> 2);
                 state <= READY;
             end else state <= READY;
         end 

@@ -80,7 +80,7 @@ module top_level(
     distortion distort (.clk_in(clk_100mhz), .dist_in(sw[0]), .ready_in(sample_trigger), 
         .audio_data(input_data), .output_data(distortion_out));
  
-    tremolo trem (.trem_on(sw[1]), .ready_in(sample_trigger), .clk_in(clk_100mhz), 
+    tremolo trem (.trem_on(sw[1]), .ready_in(sample_trigger), .clk_in(clk_100mhz), .rst_in(btnd),
         .signal_in(distortion_out), .signal_out(trem_out));         
         
     reverb rev (.reverb_on(sw[2]), .ready_in(sample_trigger), .clk_in(clk_100mhz), 
