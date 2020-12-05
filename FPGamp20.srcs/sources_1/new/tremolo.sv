@@ -31,13 +31,15 @@ module tremolo(
     
     logic [7:0] sin_wave;
     sine_generator wave5hz( .clk_in(clk_in), .rst_in(0), .step_in(ready_in), .amp_out(sin_wave));
-    logic signed [19:0] temp;
+    logic signed [8:0] signed_sine;
+    assign signed_sine = {1'b0, sin_wave};
+    logic signed [20:0] temp;
     
     always_ff @(posedge clk_in) begin
         if (trem_on) begin
             if (ready_in) begin
-                temp <= sin_wave * signal_in;
-                signal_out <= temp >>> 8;
+                temp <= signed_sine * signal_in;
+                signal_out <= temp >>> 9;
             end
         end else begin
             if (ready_in) signal_out <= signal_in;
