@@ -8,6 +8,8 @@ module fir31_test();
   logic clk,reset,ready;	// fir31 signals
   logic signed [11:0] x;
   logic signed [11:0] y;
+  logic signed [11:0] trem_out;
+  logic reverb_on;
   logic [20:0] scount;    // keep track of which sample we're at
   logic [5:0] cycle;      // wait 64 clocks between samples
   integer fin,fout,code;
@@ -28,9 +30,12 @@ module fir31_test();
     cycle = 0;
     ready = 0;
     x = 0;
+    trem_out = 0;
     reset = 1;
+    reverb_on = 0;
     #10
     reset = 0;
+    reverb_on = 1;
   end
 
   // clk has 50% duty cycle, 10ns period
@@ -61,6 +66,9 @@ module fir31_test();
   end
 
   tremolo dut(.clk_in(clk),.trem_on(1),.ready_in(ready), .rst_in(reset),
-            .signal_in(x<<<4),.signal_out(y));
+            .signal_in(x<<<4),.signal_out(trem_out));
+            
+  reverb rev (.reverb_on(reverb_on), .ready_in(ready), .clk_in(clk), 
+        .signal_in(trem_out), .signal_out(y)); 
 
 endmodule
