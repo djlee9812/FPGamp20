@@ -47,6 +47,10 @@ module top_level(
     logic signed [11:0] trem_out;
     logic signed [11:0] chorus_out;
     logic signed [11:0] reverb_out;
+    logic dist_done;
+    logic trem_done;
+    logic chorus_done;
+    logic reverb_done;
     logic [11:0] vol_out;
     logic pwm_val; //pwm signal (HI/LO)
     
@@ -82,13 +86,13 @@ module top_level(
         .audio_data(input_data), .output_data(distortion_out));
  
     tremolo trem (.trem_on(sw[1]), .ready_in(sample_trigger), .clk_in(clk_100mhz), .rst_in(btnd),
-        .signal_in(distortion_out), .signal_out(trem_out));         
+        .signal_in(distortion_out), .signal_out(trem_out), .ready_out(trem_done));         
         
-    chorus chor (.chorus_on(sw[4]), .ready_in(sample_trigger), .clk_in(clk_100mhz), 
-        .signal_in(trem_out), .signal_out(chorus_out));
+    chorus chor (.chorus_on(sw[4]), .ready_in(trem_done), .clk_in(clk_100mhz), 
+        .signal_in(trem_out),.ready_out(chorus_done), .signal_out(chorus_out));
     
-    reverb rev (.reverb_on(sw[2]), .ready_in(sample_trigger), .clk_in(clk_100mhz), 
-        .signal_in(chorus_out), .signal_out(reverb_out));                                                
+    reverb rev (.reverb_on(sw[2]), .ready_in(chorus_done), .clk_in(clk_100mhz), 
+        .signal_in(chorus_out), .signal_out(reverb_out), .ready_out(reverb_done));                                                
                                                                                             
     volume_control vc (.vol_in(sw[15:13]),
                        .signal_in(reverb_out), .signal_out(vol_out));

@@ -25,7 +25,8 @@ module chorus(
     input ready_in,
     input clk_in,
     input logic signed [11:0] signal_in,
-    output logic signed [11:0] signal_out
+    output logic signed [11:0] signal_out,
+    output logic ready_out
 
     );
     localparam READY = 5'b00001;
@@ -62,15 +63,16 @@ module chorus(
     logic signed [11:0] fifthEcho;
     logic signed [11:0] sixthEcho;
     
+    logic signed [12:0] chorusAcc;
+    
      always_ff @(posedge clk_in) begin
         if (~chorus_on) begin
-            if (ready_in) signal_out <= signal_in;
-            firstEcho <= 0;
-            secondEcho <= 0;
-            thirdEcho <= 0;
-            fourthEcho <= 0;
-            fifthEcho <= 0;
-            sixthEcho <= 0;
+            ready_out <= 1'b0;
+            if (ready_in) begin
+                signal_out <= signal_in;
+                ready_out <= 1'b1;
+            end
+            chorusAcc <= 0;
             state <= READY;
             addr <= 0;
             addr1 <= 0;
@@ -78,6 +80,7 @@ module chorus(
             wea <= 1'b1;
             
         end else begin
+            ready_out <= 1'b0;
             if (state == READY && ready_in) begin
                 state <= PREP_FIRST;
                 wea <= 1'b1;
@@ -85,7 +88,7 @@ module chorus(
                 addr <= writeAddr;
                 addr1 <= writeAddr;
                 writeAddr <= writeAddr + 1'b1;
-                signal_out <= signal_in + (firstEcho) + (secondEcho) + (thirdEcho) + (fourthEcho) + (fifthEcho) + (sixthEcho);
+                chorusAcc <= signal_in;
             end else if (state == PREP_FIRST) begin
                 // prep to get first echo
                 wea <= 1'b0;
@@ -93,20 +96,22 @@ module chorus(
                 addr1 <= writeAddr - DELAY4;
                 state <= GET_FIRST;
             end else if (state == GET_FIRST) begin
-                firstEcho <= (data_from_bram >>> 1);
-                fourthEcho <= (data_from_bram1 >>> 2);
+                
+                chorusAcc <= chorusAcc + data_from_bram + data_from_bram1;
                 addr <= writeAddr - DELAY2;
                 addr1 <= writeAddr - DELAY5;
                 state <= GET_SECOND;
             end else if (state == GET_SECOND) begin
                 state <= GET_THIRD;
-                secondEcho <= (data_from_bram >>> 2);
-                fifthEcho <= (data_from_bram1 >>> 1);
-                addr1 <= writeAddr - DELAY6;
-                addr <= writeAddr - DELAY3;
+                
+                chorusAcc <= chorusAcc + data_from_bram + data_from_bram1;
+//                addr1 <= writeAddr - DELAY6;
+//                addr <= writeAddr - DELAY3;
             end else if (state == GET_THIRD) begin
-                thirdEcho <= (data_from_bram >>> 1);
-                sixthEcho <= (data_from_bram1 >>> 2);
+                signal_out <= chorusAcc >>> 1;
+                ready_out <= 1'b1;
+//                chorus <= chorus + data_from_bram + data_from_bram1;
+                // set signal out and then normalize.
                 state <= READY;
             end else state <= READY;
         end 
