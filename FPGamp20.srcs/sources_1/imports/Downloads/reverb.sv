@@ -107,7 +107,7 @@ module reverb(
                 addr <= writeAddr - DELAY3;
             end else if (state == GET_THIRD) begin
                 verb <= verb + (data_from_bram >>> 1) + (data_from_bram1 >>> 2);
-                state <= READY;
+                state <= FINAL;
             end else if (state == FINAL) begin
                 signal_out <= (verb >>> 2);
                 ready_out <= 1'b1;
