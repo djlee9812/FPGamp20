@@ -123,7 +123,7 @@ module sine_lut(input[5:0] phase_in, input clk_in, output logic[7:0] amp_out);
       6'd45: amp_out<=8'd5;
       6'd46: amp_out<=8'd2;
       6'd47: amp_out<=8'd1;
-      6'd48: amp_out<=8'd0;
+      6'd48: amp_out<=8'd1;
       6'd49: amp_out<=8'd1;
       6'd50: amp_out<=8'd2;
       6'd51: amp_out<=8'd5;

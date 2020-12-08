@@ -31,22 +31,26 @@ module distortion(
 //    parameter signed HIGH_THRESH = 12'd1365;
     parameter signed HIGH_THRESH = 1020;
     
+    logic [11:0] temp;
+    
     always_ff @(posedge clk_in) begin
         if (dist_in) begin
-            // if abs(audio_data) < LOW_THRESH
-            if ((audio_data < LOW_THRESH && audio_data > 0) || (audio_data > -LOW_THRESH && audio_data < 0)) begin
-                output_data <= audio_data <<< 1;
-            // if abs(audio_data) < HIGH_THRESH
-            end else if ((audio_data < HIGH_THRESH && audio_data > LOW_THRESH) || 
-                (audio_data > -HIGH_THRESH && audio_data < -LOW_THRESH)) begin
-                output_data <= audio_data <<< 1;
-            // if above and positive set to max
-            end else if (audio_data > 0) begin
-                output_data <= 11'b111_1111_1111;
-            // if negative, set to min
-            end else if (audio_data < 0) begin
-                output_data <= -11'b111_1111_1111;
-            end
+//            // if abs(audio_data) < LOW_THRESH
+//            if ((audio_data < LOW_THRESH && audio_data > 0) || (audio_data > -LOW_THRESH && audio_data < 0)) begin
+//                output_data <= audio_data <<< 1;
+//            // if abs(audio_data) < HIGH_THRESH
+//            end else if ((audio_data < HIGH_THRESH && audio_data > LOW_THRESH) || 
+//                (audio_data > -HIGH_THRESH && audio_data < -LOW_THRESH)) begin
+//                output_data <= audio_data <<< 1;
+//            // if above and positive set to max
+//            end else if (audio_data > 0) begin
+//                output_data <= 11'b111_1111_1111;
+//            // if negative, set to min
+//            end else if (audio_data < 0) begin
+//                output_data <= -11'b111_1111_1111;
+//            end
+            temp <= (audio_data >>> 9);
+            output_data <= {temp <<< 9};
         end else begin
             output_data <= audio_data;
         end

@@ -17,7 +17,8 @@ module fir31_test();
   initial begin
     // open input/output files
     //CHANGE THESE TO ACTUAL FILE NAMES!YOU MUST DO THIS
-    fin = $fopen("C:/Users/Allan Garcia/Documents/fir31.waveform","r");
+//    fin = $fopen("C:/Users/Allan Garcia/Documents/fir31.waveform","r");
+    fin = $fopen("fir31.waveform","r");
     fout = $fopen("fir31.output","w");
     if (fin == 0 || fout == 0) begin
       $display("can't open file...");
@@ -70,5 +71,6 @@ module fir31_test();
             
   reverb rev (.reverb_on(reverb_on), .ready_in(ready), .clk_in(clk), 
         .signal_in(trem_out), .signal_out(y)); 
+
 
 endmodule
