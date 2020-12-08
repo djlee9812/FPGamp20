@@ -49,8 +49,8 @@ module distortion(
 //            end else if (audio_data < 0) begin
 //                output_data <= -11'b111_1111_1111;
 //            end
-            temp <= (audio_data >>> 9);
-            output_data <= {temp <<< 9};
+            temp <= (audio_data >>> 8);
+            output_data <= {temp <<< 8};
         end else begin
             output_data <= audio_data;
         end

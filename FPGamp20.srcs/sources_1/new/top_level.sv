@@ -46,7 +46,12 @@ module top_level(
     logic adc_ready;
     logic enable;
     
-    logic signed [23:0] filtered_adc_data;
+    logic signed [11:0] lpf_out;
+    logic signed [11:0] bpf_out;
+    logic signed [11:0] hpf_out;
+    logic signed [11:0] lpf_in;
+    logic signed [11:0] bpf_in;
+    logic signed [11:0] hpf_in;
     logic signed [11:0] input_data;
     logic signed [11:0] distortion_out;
     logic signed [11:0] trem_out;
@@ -74,10 +79,21 @@ module top_level(
     logic fft_out_last;
     logic [31:0] fft_out_data;
     
+    logic [31:0] ifft_data;
+    logic ifft_out_ready;
+    logic ifft_out_valid;
+    logic ifft_out_last;
+    logic [31:0] ifft_out_data;
+    
     logic sqsum_valid;
     logic sqsum_last;
     logic sqsum_ready;
     logic [31:0] sqsum_data;
+    
+    logic i_sqsum_valid;
+    logic i_sqsum_lat;
+    logic i_sqsum_ready;
+    logic [31:0] i_sqsum_data;
     
     logic fifo_valid;
     logic fifo_last;
@@ -115,6 +131,9 @@ module top_level(
                 // if sw[12] on, fft on effects signal, else on input signal
                 fft_data <= sw[12] ? {reverb_out, 4'b0} : {~adc_data[15],adc_data[14:0]}; //set the FFT DATA here!
             end
+            if (ifft_ready && my_fft_count == 0) begin
+                ifft_data <= fft_out_data;
+            end
         end else begin
             fft_data <= 0;
             fft_last <= 0;
@@ -145,11 +164,20 @@ module top_level(
     xfft_0 my_fft (.aclk(clk_100mhz), .s_axis_data_tdata(fft_data), 
                     .s_axis_data_tvalid(fft_valid),
                     .s_axis_data_tlast(fft_last), .s_axis_data_tready(fft_ready),
-                    .s_axis_config_tdata(0), 
+                    .s_axis_config_tdata(1), 
                      .s_axis_config_tvalid(0),
                      .s_axis_config_tready(),
                     .m_axis_data_tdata(fft_out_data), .m_axis_data_tvalid(fft_out_valid),
                     .m_axis_data_tlast(fft_out_last), .m_axis_data_tready(fft_out_ready));
+                    
+    xfft_0 my_ifft (.aclk(clk_100mhz), .s_axis_data_tdata(ifft_data), 
+                    .s_axis_data_tvalid(fft_out_valid),
+                    .s_axis_data_tlast(fft_out_last), .s_axis_data_tready(ifft_ready),
+                    .s_axis_config_tdata(0), 
+                     .s_axis_config_tvalid(0),
+                     .s_axis_config_tready(),
+                    .m_axis_data_tdata(ifft_out_data), .m_axis_data_tvalid(ifft_out_valid),
+                    .m_axis_data_tlast(ifft_out_last), .m_axis_data_tready(ifft_out_ready));
                     
     //for debugging commented out, make this whatever size,detail you want:
     //ila_0 myila (.clk(clk_100mhz), .probe0(fifo_data), .probe1(sqrt_data), .probe2(sqsum_data), .probe3(fft_out_data));
@@ -163,6 +191,14 @@ module top_level(
                             .m00_axis_aresetn(1'b1),. m00_axis_tvalid(sqsum_valid),
                             .m00_axis_tdata(sqsum_data),.m00_axis_tlast(sqsum_last),
                             .m00_axis_tready(sqsum_ready));
+                            
+    square_and_sum_v1_0 ifftsq(.s00_axis_aclk(clk_100mhz), .s00_axis_aresetn(1'b1),
+                            .s00_axis_tready(ifft_out_ready),
+                            .s00_axis_tdata(ifft_out_data),.s00_axis_tlast(ifft_out_last),
+                            .s00_axis_tvalid(ifft_out_valid),.m00_axis_aclk(clk_100mhz),
+                            .m00_axis_aresetn(1'b1),. m00_axis_tvalid(i_sqsum_valid),
+                            .m00_axis_tdata(i_sqsum_data),.m00_axis_tlast(i_sqsum_last),
+                            .m00_axis_tready(i_sqsum_ready));
                             
     //Didn't really need this fifo but put it in for because I felt like it and for practice:
     //This is an AXI4-Stream Data FIFO
@@ -257,7 +293,7 @@ module top_level(
 //            rgb <= 12'b0011_0000_0000;
 //        end
         draw_addr <= hcount/2;
-        if ((amp_out>>sw[10:7])>=768-vcount)begin
+        if ((amp_out>>4)>=768-vcount)begin
             rgb <= 12'b1111_0000_0000;
         end else begin
             rgb <= 12'b0000_0000_0000;
@@ -275,27 +311,32 @@ module top_level(
     assign vga_hs = ~hsync;
     assign vga_vs = ~vsync;
     
-    fir31 lpf (.clk_in(clk_100mhz), .rst_in(btnd), .ready_in(sample_trigger), .x_in(sampled_adc_data), .y_out(filtered_adc_data));
-    
-    assign input_data = sw[4] ? (filtered_adc_data >>> 12) : sampled_adc_data;
- 
-    distortion distort (.clk_in(clk_100mhz), .dist_in(sw[0]), .ready_in(sample_trigger), 
-        .audio_data(input_data), .output_data(distortion_out));
+    lpf_fir lpf (.clk_in(clk_100mhz), .rst_in(btnd), .ena(sw[6]), .ready_in(sample_trigger), .x_in(sampled_adc_data), .y_out(lpf_out), .ready_out(lpf_done));
+    bpf_fir bpf (.clk_in(clk_100mhz), .rst_in(btnd), .ena(sw[7]), .ready_in(lpf_done), .x_in(lpf_out), .y_out(bpf_out), .ready_out(bpf_done));
+    hpf_fir hpf (.clk_in(clk_100mhz), .rst_in(btnd), .ena(sw[8]), .ready_in(bpf_done), .x_in(bpf_out), .y_out(hpf_out), .ready_out(hpf_done));
         
-    vibrato vib (.vibrato_on(sw[5]), .ready_in(sample_trigger), .clk_in(clk_100mhz), .rst_in(btnd),
-        .signal_in(distortion_out), .signal_out(vibrato_out), .ready_out(vibrato_done));
+    logic signed [11:0] output_sig = sw[10] ? ifft_out_data[31:20] : reverb_out; 
+ 
+    distortion distort (.clk_in(clk_100mhz), .dist_in(sw[0]), .ready_in(hpf_done), 
+        .audio_data(hpf_out), .output_data(distortion_out));
+        
+    vibrato vib (.vibrato_on(sw[4]), .ready_in(sample_trigger), .clk_in(clk_100mhz), .rst_in(btnd),
+        .signal_in(distortion_out), .signal_out(vibrato_out), .flange_on(sw[5]), .ready_out(vibrato_done));
  
     tremolo trem (.trem_on(sw[1]), .ready_in(vibrato_done), .clk_in(clk_100mhz), .rst_in(btnd),
-        .signal_in(vibrato_out), .signal_out(trem_out), .flange_on(sw[6]), .ready_out(trem_done));         
+        .signal_in(vibrato_out), .signal_out(trem_out), .ready_out(trem_done));         
         
     chorus chor (.chorus_on(sw[2]), .ready_in(trem_done), .clk_in(clk_100mhz), 
         .signal_in(trem_out),.ready_out(chorus_done), .signal_out(chorus_out));
     
     reverb rev (.reverb_on(sw[3]), .ready_in(chorus_done), .clk_in(clk_100mhz), 
-        .signal_in(chorus_out), .signal_out(reverb_out), .ready_out(reverb_done));                                                
+        .signal_in(chorus_out), .signal_out(reverb_out), .ready_out(reverb_done));     
+        
+                          
                                                                                             
     volume_control vc (.vol_in(sw[15:13]),
-                       .signal_in(reverb_out), .signal_out(vol_out));
+                       .signal_in(output_sig), .signal_out(vol_out));
+                       
     pwm (.clk_in(clk_100mhz), .rst_in(btnd), .level_in(vol_out), .pwm_out(pwm_val));
     assign aud_pwm = pwm_val?1'bZ:1'b0; 
     

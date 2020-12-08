@@ -63,7 +63,7 @@ module chorus(
     logic signed [11:0] fifthEcho;
     logic signed [11:0] sixthEcho;
     
-    logic signed [12:0] chorusAcc;
+    logic signed [13:0] chorusAcc;
     
      always_ff @(posedge clk_in) begin
         if (~chorus_on) begin
@@ -108,7 +108,7 @@ module chorus(
 //                addr1 <= writeAddr - DELAY6;
 //                addr <= writeAddr - DELAY3;
             end else if (state == GET_THIRD) begin
-                signal_out <= chorusAcc >>> 1;
+                signal_out <= chorusAcc >>> 2;
                 ready_out <= 1'b1;
 //                chorus <= chorus + data_from_bram + data_from_bram1;
                 // set signal out and then normalize.

@@ -73,7 +73,7 @@ module vibrato(
             end else if (state == RECEIVE) begin
                 // prep to get delayed sound
                 wea <= 1'b0;
-                addr <= writeAddr - (sin_wave>>1);
+                addr <= writeAddr - (sin_wave>>1) - 1;
                 state <= COMBINE;
             end else if (state == COMBINE) begin
                 // get delayed sound and output
