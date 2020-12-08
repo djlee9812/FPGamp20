@@ -29,11 +29,12 @@ module reverb(
     output logic ready_out
 
     );
-    localparam READY = 5'b00001;
-    localparam PREP_FIRST = 5'b00010;
-    localparam GET_FIRST = 5'b00100;
-    localparam GET_SECOND = 5'b01000;
-    localparam GET_THIRD = 5'b10000;
+    localparam READY = 6'b000001;
+    localparam PREP_FIRST = 6'b000010;
+    localparam GET_FIRST = 6'b000100;
+    localparam GET_SECOND = 6'b001000;
+    localparam GET_THIRD = 6'b010000;
+    localparam FINAL = 6'b100000;
     
     parameter DELAY1 = 16'd20000;
     parameter DELAY2 = 16'd24000;
@@ -42,7 +43,7 @@ module reverb(
     parameter DELAY5 = 16'd36000;
     parameter DELAY6 = 16'd40000;
     
-    logic [4:0] state;
+    logic [5:0] state;
     
     logic signed [11:0] data_to_bram;
     logic signed [11:0] data_from_bram;
@@ -62,7 +63,7 @@ module reverb(
     logic signed [11:0] fourthEcho;
     logic signed [11:0] fifthEcho;
     logic signed [11:0] sixthEcho;
-    logic signed [11:0] verb;
+    logic signed [13:0] verb;
     
      always_ff @(posedge clk_in) begin
         if (~reverb_on) begin
@@ -105,7 +106,10 @@ module reverb(
                 addr1 <= writeAddr - DELAY6;
                 addr <= writeAddr - DELAY3;
             end else if (state == GET_THIRD) begin
-                signal_out <= verb + (data_from_bram >>> 1) + (data_from_bram1 >>> 2);
+                verb <= verb + (data_from_bram >>> 1) + (data_from_bram1 >>> 2);
+                state <= READY;
+            end else if (state == FINAL) begin
+                signal_out <= (verb >>> 2);
                 ready_out <= 1'b1;
                 state <= READY;
             end else state <= READY;

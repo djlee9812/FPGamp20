@@ -72,11 +72,11 @@ module vibrato(
             end else if (state == RECEIVE) begin
                 // prep to get delayed sound
                 wea <= 1'b0;
-                addr <= writeAddr - sin_wave;
+                addr <= writeAddr - (sin_wave>>1);
                 state <= PREPARE;
             end else if (state == PREPARE) begin
                 // get delayed sound and output
-                signal_out <= (vibAcc + data_from_bram) >>> 1;
+                signal_out <= data_from_bram;
                 ready_out <= 1'b1;
                 state <= READY;
             end else state <= READY;
