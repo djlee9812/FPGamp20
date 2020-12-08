@@ -31,9 +31,10 @@ module vibrato(
     output logic ready_out
     );
     
-    localparam READY = 3'b001;
-    localparam RECEIVE = 3'b010;
-    localparam PREPARE = 3'b100;
+    localparam READY = 4'b0001;
+    localparam RECEIVE = 4'b0010;
+    localparam COMBINE = 4'b0100;
+    localparam PREPARE = 4'b1000;
     
     logic  [7:0] sin_wave;
     sine_generator wave5hz( .clk_in(clk_in), .rst_in(rst_in), .step_in(ready_in), .amp_out(sin_wave));
@@ -73,12 +74,16 @@ module vibrato(
                 // prep to get delayed sound
                 wea <= 1'b0;
                 addr <= writeAddr - (sin_wave>>1);
+                state <= COMBINE;
+            end else if (state == COMBINE) begin
+                // get delayed sound and output
+                vibAcc <= vibAcc + data_from_bram;
+                ready_out <= 1'b1;
                 state <= PREPARE;
             end else if (state == PREPARE) begin
-                // get delayed sound and output
-                signal_out <= data_from_bram;
-                ready_out <= 1'b1;
-                state <= READY;
+                 ready_out <= 1'b1;
+                 signal_out <= vibAcc >>> 1;
+                 state <= READY;
             end else state <= READY;
         end 
         
