@@ -25,6 +25,7 @@ module vibrato(
     input ready_in,
     input clk_in,
     input rst_in,
+    input flange_on,
     input logic signed [11:0] signal_in,
     output logic signed [11:0] signal_out,
     output logic ready_out
@@ -45,7 +46,8 @@ module vibrato(
     logic wea;
     blk_mem_gen_0 mem0(.addra(addr), .clka(clk_in), .dina(data_to_bram), .douta(data_from_bram), 
                     .ena(1), .wea(wea));
-                    
+    
+    logic signed [12:0] vibAcc;
     always_ff @(posedge clk_in) begin
         if (~vibrato_on) begin
             ready_out <= 1'b0;
@@ -66,6 +68,7 @@ module vibrato(
                 data_to_bram <= signal_in;
                 addr <= writeAddr;
                 writeAddr <= writeAddr + 1'b1;
+                vibAcc <= (flange_on) ? signal_in : 0;
             end else if (state == RECEIVE) begin
                 // prep to get delayed sound
                 wea <= 1'b0;
@@ -73,7 +76,7 @@ module vibrato(
                 state <= PREPARE;
             end else if (state == PREPARE) begin
                 // get delayed sound and output
-                signal_out <= data_from_bram;
+                signal_out <= (vibAcc + data_from_bram) >>> 1;
                 ready_out <= 1'b1;
                 state <= READY;
             end else state <= READY;
