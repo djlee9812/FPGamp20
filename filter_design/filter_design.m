@@ -42,13 +42,24 @@ fclose(fileID);
 
 %% Plot frequency response
 figure;
-freqz(lpf, 1)
+subplot(3,1, 1)
+[h_l, w_l] = freqz(lpf, 1);
+semilogx(w_l/pi*fs, db(h_l))
+title('Low Pass Filter')
 
-figure;
-freqz(bpf, 1)
+% figure;
+subplot(3,1, 2)
+[h_b, w_b] = freqz(bpf, 1);
+semilogx(w_b/pi*fs, db(h_b))
+ylabel('$|H(\Omega)|$ [dB]', 'Interpreter', 'latex')
+title('Band Pass Filter')
 
-figure;
-freqz(hpf, 1)
+% figure;
+subplot(3,1, 3)
+[h_h, w_h] = freqz(hpf, 1);
+semilogx(w_h/pi*fs, db(h_h))
+xlabel("Frequency [Hz]")
+title('High Pass Filter')
 
 %% Design shelving filters
 gain = 5; % gain in dB for shelves
