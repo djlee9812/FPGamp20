@@ -2,17 +2,17 @@
 n_taps = 30;
 fs = 48000;
 
-fc_lpf = 2000;
+fc_lpf = 1000;
 wc_lpf = 2 * fc_lpf / fs;
-lpf = fir1(n_taps, wc_lpf);
+lpf = fir1(n_taps, wc_lpf, chebwin(n_taps+1));
 
-fc_bpf = [2000, 4000];
+fc_bpf = [3000, 4000];
 wc_bpf = 2 .* fc_bpf ./ fs;
-bpf = fir1(n_taps, wc_bpf);
+bpf = fir1(n_taps, wc_bpf, chebwin(n_taps+1));
 
-fc_hpf = 2000;
+fc_hpf = 1400;
 wc_hpf = 2 * fc_hpf / fs;
-hpf = fir1(50, 0.15, 'high');
+hpf = fir1(n_taps, 0.15, 'high', chebwin(n_taps+1));
 
 %% Write to file
 fileID = fopen('lpf.txt','w');
